@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: transparent;
+    color: #eee;
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    justify-content: center;
+  }
+
+  .filter-btn {
+    background: transparent;
+    color: #666;
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .filter-btn:hover { color: #aaa; border-color: #555; }
+  .filter-btn.active { color: #fff; border-color: #fff; background: transparent; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #111;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.6); }
+  .card:hover .overlay { opacity: 1; }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 12px 10px;
+  }
+
+  .overlay-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+
+  .overlay-year {
+    font-size: 9px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .overlay-role {
+    font-size: 9px;
+    color: #7eb8f7;
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .overlay-link {
+    font-size: 9px;
+    color: #f5c518;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+  }
+
+  .overlay-link:hover { text-decoration: underline; }
+
+  .no-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: #161616;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #333;
+    text-align: center;
+    padding: 10px;
+  }
+
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+  <button class="filter-btn" onclick="setFilter('TV Series', this)">Television</button>
+  <button class="filter-btn" onclick="setFilter('Film', this)">Film</button>
+  <button class="filter-btn" onclick="setFilter('Short', this)">Shorts</button>
+  <button class="filter-btn" onclick="setFilter('Mini', this)">Mini Series</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const CREDITS = [
+  { title: "Hierarchy", year: "2025", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BZTQ1NDhkZDctYjg4Ni00OWNiLWE5MTAtMzIzZjgxMmE2MWZhXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt13540044" },
+  { title: "The Ritual", year: "2025", role: "Music Editor", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BYjc5ZTA4ZjUtOTY2ZS00MjA0LTkxNGUtNDc1ZDVlOTU2ZGQ2XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt32194932" },
+  { title: "American Experience", year: "2025", role: "Re-recording Mixer / Sound Designer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BZDU0MGE4ZjgtMmRmOS00NDRhLWIwNmYtYzAzZWRhYzkzZmYwXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt0094416" },
+  { title: "Caregiving", year: "2025", role: "Re-recording Mixer / Sound Designer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BZjhhYWNhYzItZDVjNC00MGVmLWFhOTktYTRkZTc4ODMzMTI2XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt32321785" },
+  { title: "A Life, Lost", year: "2024", role: "Sound Designer", type: "Short", poster: "https://m.media-amazon.com/images/M/MV5BZmQ2OWNjZDYtNDdmZS00ZDkyLWJhZWMtZjJkNDE1NDE0NGUxXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt34877636" },
+  { title: "Or Something", year: "2024", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BNGZhOWM3MmMtM2QyMi00NzQ1LWE3ZDctNDQzNmM1NWMyZjY3XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt26599297" },
+  { title: "Ballin' Out", year: "2024", role: "Re-recording Mixer / Sound Designer", type: "TV Mini Series", poster: "https://m.media-amazon.com/images/M/MV5BZWQzYjdiZWEtYWRmOS00NGYxLWE2MzAtZmZjMGQ5N2IwYTc3XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt32439598" },
+  { title: "Ctrl+Alt+Desire", year: "2024", role: "Supervising Sound Editor / Re-recording Mixer", type: "TV Mini Series", poster: "https://m.media-amazon.com/images/M/MV5BYmRhZWMxNDctZGE3ZS00YTA0LTlkZmItNTY1MDVmMDljNDc3XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt31842359" },
+  { title: "American Masters", year: "2024", role: "Re-recording Mixer / Sound Designer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BMTQ3ODc5ODQ0NV5BMl5BanBnXkFtZTgwNzM1MjUzMDI@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt0364151" },
+  { title: "Rebel//Rebel", year: "2023", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BMDkyNmU5OWItNjZhNC00YTJjLTg1ZmItY2QyMjExMDU3MDU0XkEyXkFqcGdeQXVyMjgwNDgyMjQ@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt14600024" },
+  { title: "Summoning Sylvia", year: "2023", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BN2M5ZjYzNDQtNGI4YS00OTkxLWJmM2ItMGYyZDZlODhhZDczXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt14443888" },
+  { title: "Mama!", year: "2023", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BZmNkZWYwNTYtNmFmNS00ODA0LTkxZGUtZGRjMDMxM2UyOTc2XkEyXkFqcGdeQXVyMTUzNTgzNzM0._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt23043386" },
+  { title: "The French Montana Story: For Khadija", year: "2023", role: "Re-recording Mixer / Sound Designer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BOGQ4MTBhNDUtYmNmOC00Zjg4LWEwMmYtNDYwYTRhZjM0NzdkXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt27620778" },
+  { title: "Mack & Rita", year: "2022", role: "Music Editor", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BNjdjODZiMDEtZTA5Yi00NDIxLWJiMmEtMzhhMjFhMmQwM2YzXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt14330236" },
+  { title: "Legendary", year: "2020", role: "Music Editor", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BYTY3ZTBiZjQtMjhlNy00ZDA4LTk5YzItODE0OWQzMzIyM2RkXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt11048090" },
+  { title: "Out of Order", year: "2022", role: "Re-recording Mixer", type: "Short", poster: "https://m.media-amazon.com/images/M/MV5BNDIyZTc4ZmUtZGQxYy00ZTFiLWI3ZGQtNDM3MmY0NDQ1NjcxXkEyXkFqcGdeQXVyMTEwNjY3NjIx._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt20415052" },
+  { title: "Milestone Generations", year: "2022", role: "Sound Mix and Design", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BZjkxOTUyZDEtMDZjNy00ZGU2LThmYzctNjMxMmJiMTRhMTBjXkEyXkFqcGdeQXVyMjQxOTUwNzg@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt21435030" },
+  { title: "We're Doing Good", year: "2022", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BMzkxMWZkOGQtOTY2OS00YjgzLTgyNTYtMzRkNDMxOWFjYzNlXkEyXkFqcGdeQXVyMzEwMjAxMjc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt15706956" },
+  { title: "Mala Onda", year: "2022", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BNGRiYTYzNzMtNDNiNC00ZGIzLWJhYTQtNjMwYTZjMjliM2RmXkEyXkFqcGdeQXVyOTg5NTMzODU@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt23010258" },
+  { title: "In Our Mothers' Gardens", year: "2021", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BZjk5NDZlNGMtNTM1NS00NzE4LWEzM2ItMmJmNTU4MWM3NDgzXkEyXkFqcGdeQXVyMTA2MTk0Nzgz._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt14369930" },
+  { title: "Visitors", year: "2020", role: "Re-recording Mixer / Sound Designer", type: "Short", poster: "https://m.media-amazon.com/images/M/MV5BYjIwNTg0NjEtNTNhZC00MWJmLWJlZmMtMTBjZTM1ZGE5OGM1XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt13221718" },
+  { title: "Danny's Girl", year: "2020", role: "Re-recording Mixer", type: "Short", poster: "https://m.media-amazon.com/images/M/MV5BMWM5ODZlNjMtNzk4Mi00NWY1LWI5MmMtYjkwMjYwYzA1ZGVjXkEyXkFqcGdeQXVyNjUyODA1Mzc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt11547024" },
+  { title: "Wrong Man", year: "2018", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BOTI5NDUwNTI4Nl5BMl5BanBnXkFtZTgwNzQxOTQ0NTM@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt7708956" },
+  { title: "Hamilton's Pharmacopeia", year: "2016", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BODE2MjA5YzctYTY1ZS00Y2QwLTk1NDktYjllNGU1MTRiYmE2XkEyXkFqcGdeQXVyNjAxMDM3NDI@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt6813650" },
+  { title: "Traveling the Stars", year: "2016", role: "Re-recording Mixer", type: "TV Mini Series", poster: "https://m.media-amazon.com/images/M/MV5BZDM0ZTJjM2MtNWNiNi00MzhiLTk5Y2YtZmM4MGMwMmVkNTY2XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt6022248" },
+  { title: "Slutever", year: "2018", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BY2ZmMWNkNDEtMDljYi00ZjQ1LWJkNWYtODc2ZmM4YjIyZTgzXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt7829456" },
+  { title: "Panic: The Untold Story of the 2008 Financial Crisis", year: "2018", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BNmU3NzMxZmQtYWE3NS00YTIxLTk1YzktMzRjM2E1YjMyMjM4XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt9419838" },
+  { title: "My House", year: "2018", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BMzc1YTAzMzgtMTAzMC00MDZiLTg5OTgtNDIyYTEzOTUyMGMwXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt8372074" },
+  { title: "Vice", year: "2013", role: "Sound Recordist", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BNzM0YWE4YjktMDliMi00ZWMxLTg5MmItZDhiN2Q1ZjUxZDliXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt2782710" },
+  { title: "States of Undress", year: "2016", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BZmJiMTU2NDEtMThmMi00OWQ2LWJmMDctY2E0NzczZWIyNjJhXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt5772346" },
+  { title: "The Third Industrial Revolution", year: "2017", role: "Re-recording Mixer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BNDQyNjYwYTctZTU5OS00ZWQwLWE5ZTUtZDg1OTgxYTFjNTdiXkEyXkFqcGdeQXVyMTQxNzE3ODA3._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt6794468" },
+  { title: "Noisey", year: "2016", role: "Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BNDRkZTIwZTItNTllMy00YmYyLWEyMzItYjM1ZWEzYmY2NWVmXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt5730720" },
+  { title: "Gaycation", year: "2016", role: "Re-recording Mixer / Audio Engineer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BMDhkYmJmMTQtYzk2Mi00NTQ2LTk0MzItZDQzMzFkNGJmOGZiXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt5430288" },
+  { title: "Fuck That's Delicious", year: "2016", role: "Audio Engineer / Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BYTBjM2MyYjMtZjQxNy00OGYyLTkxYmEtM2EwNTMyY2IwMWExXkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt5866048" },
+  { title: "Balls Deep", year: "2016", role: "Audio Engineer / Re-recording Mixer", type: "TV Series", poster: "https://m.media-amazon.com/images/M/MV5BZTc5YjYyMjktYzczMS00NzZhLWJkNjQtNWE1YzQyNWJiZDA3XkEyXkFqcGc@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt5753820" },
+  { title: "Mirror Heart", year: "2015", role: "Sound Effects Editor", type: "Short", poster: "https://m.media-amazon.com/images/M/MV5BNTI0ZmYxZDktZjM1My00YTI0LTgzYTctMTBiMGExMWNhMWZjXkEyXkFqcGdeQXVyNDM4MzkzOTQ@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt6525594" },
+  { title: "Army of the Damned", year: "2013", role: "Sound Designer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BMjM0NDExMTM4N15BMl5BanBnXkFtZTgwMjQ1MzA1MDE@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt2570436" },
+  { title: "Northern Borders", year: "2013", role: "Sound Designer", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BMTk2MjM2ODk0MF5BMl5BanBnXkFtZTgwNzM3ODEwNTE@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt2316810" },
+  { title: "Computer Chess", year: "2013", role: "Sound Editor", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BNTIzNzA0MDE1Nl5BMl5BanBnXkFtZTcwMDIxMDY2OQ@@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt2007360" },
+  { title: "High Tech, Low Life", year: "2012", role: "Sound Editor", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BMTg1NDQ1NDAyN15BMl5BanBnXkFtZTcwODYwNTA5OA@@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt2151988" },
+  { title: "Suitcase of Love and Shame", year: "2013", role: "Sound Editor", type: "Film", poster: "https://m.media-amazon.com/images/M/MV5BMjM0MDU1ODgyOF5BMl5BanBnXkFtZTgwOTUyMDkxMjE@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt2223676" },
+  { title: "Meet the New Kings of Kong", year: "2013", role: "Re-recording Mixer", type: "Short", poster: "https://m.media-amazon.com/images/M/MV5BZTg0YjdmNTgtMWY5MS00MGVkLWE4MWItNWRjYWUyNzg5OWNlL2ltYWdlL2ltYWdlXkEyXkFqcGdeQXVyNjM2NDIwMzQ@._V1_SX300.jpg", imdbUrl: "https://www.imdb.com/title/tt3410042" },
+];
+
+let currentFilter = 'all';
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function render() {
+  const list = currentFilter === 'all'
+    ? CREDITS
+    : CREDITS.filter(c => c.type.includes(currentFilter));
+
+  document.getElementById('grid').innerHTML = list.map(c => `
+    <div class="card" onclick="window.open('${c.imdbUrl}','_blank')">
+      ${c.poster
+        ? `<img src="${c.poster}" alt="${c.title.replace(/"/g, '')}" loading="lazy">`
+        : `<div class="no-poster">${c.title}</div>`}
+      <div class="overlay">
+        <div class="overlay-title">${c.title}</div>
+        <div class="overlay-year">${c.year} · ${c.type}</div>
+        <div class="overlay-role">${c.role}</div>
+        <span class="overlay-link">IMDB ↗</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+render();
+</script>
+</body>
+</html>
